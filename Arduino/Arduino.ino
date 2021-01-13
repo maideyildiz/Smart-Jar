@@ -1,16 +1,12 @@
 /*********************************************************
-  BSM313 Nesnelerin İnterneti ve Uygulamaları Dersi Proje Ödevi
-  Proje Adı: Akıllı Kavanoz
-  Öğrenci Adı: Hayriye Maide YILDIZ
-  Öğrenci No: B191210310
-  Grubu: 1-A
+  SMART-JAR PROJECT
 *********************************************************/
   #include <SoftwareSerial.h>
   const int trigPin = 9;
   const int echoPin = 8;
-  long sure;
-  long uzaklik; 
-  float seviye;
+  long duration;
+  long distance; 
+  float level;
   SoftwareSerial espSerial(5, 6);
   void setup() {
     pinMode(trigPin,OUTPUT); 
@@ -25,10 +21,10 @@
     digitalWrite(trigPin, HIGH);
     delayMicroseconds(10);
     digitalWrite(trigPin, LOW);
-    sure = pulseIn(echoPin, HIGH);
-    uzaklik = sure*0.034/2;
-    seviye =((14-uzaklik)/14.0)*100;
+    duration = pulseIn(echoPin, HIGH);
+    distance = duration*0.034/2;
+    level =((14-distance)/14.0)*100;
     delay(2000);
-    espSerial.println(seviye);
+    espSerial.println(level);
     delay(1000);
   }

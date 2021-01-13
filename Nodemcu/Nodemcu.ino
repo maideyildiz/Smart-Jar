@@ -1,25 +1,21 @@
 /*********************************************************
-  BSM313 Nesnelerin İnterneti ve Uygulamaları Dersi Proje Ödevi
-  Proje Adı: Akıllı Kavanoz
-  Öğrenci Adı: Hayriye Maide YILDIZ
-  Öğrenci No: B191210310
-  Grubu: 1-A
+SMART-JAR PROJECT
 *********************************************************/
   #include <ESP8266WiFi.h> 
   #include <WiFiClient.h>
   #include<WiFiClientSecure.h>
   #include <UniversalTelegramBot.h>
   #include "ThingSpeak.h"
-  char ssid[] = "FiberHGW_ZTPX24_2.4GHz";
-  char password[] = "4tytUTgRfT";
+  char ssid[] = "Your wifi name";
+  char password[] = "Your wifi password";
   
-  unsigned long channelID =1256358;
-  unsigned int field_no=1;
-  const char* writeAPIKey = "VE4V404C03P8LWFQ";
-  const char* readAPIKey = "2L9HWNX0LM0IO3JY";
-  long uzaklik;
-  #define TELEGRAM_BOT_TOKEN "1418071653:AAENcFyaIBbJUzVg46rbeQX-w_l5LGEh53k"
-  #define CHAT_ID "1379523364"
+  unsigned long channelID =XXXXXXX;//Your ThingSpeak channel ID
+  unsigned int field_no=1;//Your field no
+  const char* writeAPIKey = "XXXXXX"; //Your ThingSpeak Write Api Key
+  const char* readAPIKey = "XXXXXXX";//Your ThingSpeak Read Api Key
+  long distance;
+  #define TELEGRAM_BOT_TOKEN "XXXXXXXX" //Your Telegram Bot Token
+  #define CHAT_ID "XXXXXX" //Your Telegram Chat ID
   WiFiClientSecure client;
   WiFiClient client2;
   UniversalTelegramBot bot(TELEGRAM_BOT_TOKEN, client);
@@ -27,34 +23,34 @@
   int botRequestDelay = 1000;
   unsigned long lastTimeBotRan;
   
-  void telegramMesaji(int mesajSayisi) 
+  void telegramMessage(int count) 
   {
-    Serial.println("Telegram Mesajı");
-    Serial.println(String(mesajSayisi));
-    for (int i = 0; i < mesajSayisi; i++) {
+    Serial.println("Telegram Message");
+    Serial.println(String(count));
+    for (int i = 0; i < count; i++) {
       String chat_id = String(bot.messages[i].chat_id);
       if (chat_id != CHAT_ID)
       {
-        bot.sendMessage(chat_id, "Maalesef bu kavanoz size ait değil...", "");
+        bot.sendMessage(chat_id, "Unfortunately this jar doesn't belong to you...", "");
         continue;
       }
       String text = bot.messages[i].text;
       Serial.println(text);
       String from_name = bot.messages[i].from_name;
       if (text == "/start") {
-        String baslangic = "Hoşgeldin, " + from_name + ".\n";
-        baslangic += "Akıllı Kavanoza Hoşgeldiniz! \n\n";
-        baslangic += "/Durum yazarak kavanozunuzun doluluk oranını görebilirsiniz. \n";
-        bot.sendMessage(chat_id, baslangic, "");
+        String starting = "Welcome, " + from_name + ".\n";
+        starting += "Welcome to Smart-Jar! \n\n";
+        starting += "You can see your jar's occupancy by texting /Status \n";
+        bot.sendMessage(chat_id, starting, "");
       }
-      if (text == "/Durum") {
-        String durum="Kavanozunuzun doluluk oranı: %" + String(uzaklik);
-        bot.sendMessage(chat_id,durum, "");
+      if (text == "/Status") {
+        String state="Your occupancy level is : %" + String(distance);
+        bot.sendMessage(chat_id,state, "");
       }
       else {
-        String uyari = "Lütfen belli komutları girin! \n";
-        uyari += "/Durum yazarak kavanozunuzun doluluk oranını görebilirsiniz. \n";
-        bot.sendMessage(chat_id, uyari, "");
+        String warning = "Please text things we provide you! \n";
+        uyari += "You can see your jar's occupancy by texting /Status \n";
+        bot.sendMessage(chat_id, warning, "");
         }
     }
   }
@@ -62,8 +58,6 @@
   {
     Serial.begin(115200);
     #ifdef ESP8266
-      //WiFiSecureClient metodu TelegramBot uygulaması için gerekiyor.
-      //Ama Thinkspeak bağlantısında sıkıntı çıkardığı için burada client.setInsecure kullanılmıştır.
       client.setInsecure();
     #endif
     WiFi.mode(WIFI_STA);
@@ -71,37 +65,37 @@
     while (WiFi.status() != WL_CONNECTED) 
     {
       delay(1000);
-      Serial.println("WiFi bağlantısı yapılıyor...");
+      Serial.println("Connecting to wifi...");
     }
     Serial.println(WiFi.localIP());
       ThingSpeak.begin(client2);
       while (!Serial) 
       {
-      ; // Serial portun bağlanması için bekler.
+      ; 
       }
   }
     
   void loop() 
   {
-    uzaklik=Serial.read();
+    distance=Serial.read();
     if (Serial.available()) 
     {
-      Serial.print("Hesaplanan dolum oranı: %");
-      Serial.println(uzaklik);
-      ThingSpeak.writeField (channelID, field_no, uzaklik, writeAPIKey);
-      float oku = ThingSpeak.readFloatField(channelID, field_no);
-      Serial.print("ThingSpeak’ten Okunan Dolum Oranı: %"); 
-      Serial.println(oku);
+      Serial.print("Evaluated occupancy : %");
+      Serial.println(distance);
+      ThingSpeak.writeField (channelID, field_no, distance, writeAPIKey);
+      float reading = ThingSpeak.readFloatField(channelID, field_no);
+      Serial.print("Occupancy level from ThingSpeak: %"); 
+      Serial.println(reading);
       delay(20000);
     }
     if (millis() > lastTimeBotRan + botRequestDelay)  
     {
-      int mesajSayisi = bot.getUpdates(bot.last_message_received + 1);
-      while(mesajSayisi) 
+      int count = bot.getUpdates(bot.last_message_received + 1);
+      while(count) 
       {
-        Serial.println("Mesaj var");
-        telegramMesaji(mesajSayisi);
-        mesajSayisi = bot.getUpdates(bot.last_message_received + 1);
+        Serial.println("Got new message");
+        telegramMessage(count);
+        count = bot.getUpdates(bot.last_message_received + 1);
       }
       lastTimeBotRan = millis();
     }
